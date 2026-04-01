@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Rajasthan Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>#map{height:100vh;} .top{position:absolute;z-index:1000;background:#fff;padding:8px;left:10px;top:10px;border-radius:8px;}</style>
+</head>
+<body>
+  <div class="top">
+    <select id="city">
+      <option>Jaipur</option><option>Jodhpur</option><option>Bikaner</option>
+      <option>Ajmer</option><option>Udaipur</option><option>Pushkar</option><option>Jaisalmer</option>
+    </select>
+    <button onclick="loadMap()">Load</button>
+  </div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([26.9124,75.7873], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    let layerGroup = L.layerGroup().addTo(map);
+
+    async function loadMap(){
+      const city = document.getElementById('city').value;
+      const url = `http://127.0.0.1:8000/api/map?city=${city}&categories=food,temples,museums,parks,attractions,hotels`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      layerGroup.clearLayers();
+      data.markers.forEach(m=>{
+        const marker = L.marker([m.lat,m.lon]).addTo(layerGroup);
+        marker.bindPopup(`<b>${m.name}</b><br/>${m.category}<br/>${m.address || ''}<br/>${m.opening_hours || ''}`);
+      });
+
+      if(data.markers.length){
+        map.setView([data.markers[0].lat,data.markers[0].lon], 12);
+      }
+    }
+  </script>
+</body>
+</html>
